@@ -13,82 +13,84 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ProductService implements IProduct {
+public class ProductService {
 
-    private ProductDao productDAO;
-    private ProductDto productDto;
+    private final ProductDao productDao;
+
 
     @Autowired
-    public ProductService(ProductDao productDAO, ProductDto productDto) {
-        this.productDAO = productDAO;
-        this.productDto = productDto;
+    public ProductService(ProductDao productDao) {
+        this.productDao = productDao;
+
     }
 
-    @Override
+
     public List<Product> findAll() {
-        return (List<Product>) productDAO.findAll();
+        return (List<Product>) productDao.findAll();
     }
 
-    @Override
+
     public Optional<Product> findById(long id) {
-        return productDAO.findById(id);
+        return productDao.findById(id);
     }
 
-    @Override
+
     public ProductDto save(Product product) {
-        if (product.getPrice() < 0)
-            return null;
-        else if (product.getQuantity() < 0)
-            return null;
+        ProductDto productDto = new ProductDto();
+        if (product.getPrice() <= 0)
+            throw new IllegalStateException("price must be more than 0");
+        else if (product.getQuantity() <= 0)
+            throw new IllegalStateException("quantity must be more than 0");
         else {
-            Product save = productDAO.save(product);
-            productDto.setProductId(save.getProductId());
+            Product save = productDao.save(product);
+            productDto.setId(save.getId());
         }
 
         return productDto;
     }
 
-    @Override
-    public Optional<ProductDto> update(long id, Product product) {
-        Product updateProduct = productDAO.findById(id).get();
-        updateProduct.setProductName(product.getProductName());
-        updateProduct.setQuantity(product.getQuantity());
-        updateProduct.setPrice(product.getPrice());
 
-        if (updateProduct.getQuantity() < 0) {
-            return null;
-        } else if (updateProduct.getPrice() < 0) {
-            return null;
+    public ProductDto update(long id, Product product) {
+        ProductDto productDto = new ProductDto();
+        Product productUpdate = productDao.findById(id).get();
+
+        productUpdate.setName(product.getName());
+        productUpdate.setQuantity(product.getQuantity());
+        productUpdate.setPrice(product.getPrice());
+
+        if (productUpdate.getQuantity() <= 0) {
+            throw new IllegalStateException("quantity must be more than 0");
+        } else if (productUpdate.getPrice() <= 0) {
+            throw new IllegalStateException("price must be more than 0");
         } else {
-            productDAO.save(updateProduct);
-            productDto.setProductId(updateProduct.getProductId());
+            productDao.save(productUpdate);
+            productDto.setId(productUpdate.getId());
 
         }
-
-
-        return Optional.ofNullable(productDto);
-    }
-
-    @Override
-    public ProductDto delete(long id) {
-        productDto.setProductId(productDAO.findById(id).get().getProductId());
-        productDAO.deleteById(id);
         return productDto;
     }
 
-    @Override
-    public List<Product> findProductWithSort(String field) {
-        return (List<Product>) productDAO.findAll(Sort.by(Sort.Direction.ASC, field));
+
+    public ProductDto delete(long id) {
+        ProductDto productDto = new ProductDto();
+        productDto.setId(productDao.findById(id).get().getId());
+        productDao.deleteById(id);
+        return productDto;
     }
 
-    @Override
-    public List<Product> findProductWithSortDesc(String field) {
-        return (List<Product>) productDAO.findAll(Sort.by(Sort.Direction.DESC, field));
+
+    public List<Product> sortProductAsc(String field) {
+        return (List<Product>) productDao.findAll(Sort.by(Sort.Direction.ASC, field));
     }
 
-    @Override
-    public Page<Product> findProductWithPagination(int offset, int pageSize) {
-        Page<Product> products = productDAO.findAll(PageRequest.of(offset, pageSize));
+
+    public List<Product> sortProductDesc(String field) {
+        return (List<Product>) productDao.findAll(Sort.by(Sort.Direction.DESC, field));
+    }
+
+
+    public Page<Product> sortProductPagination(int offset, int pageSize) {
+        Page<Product> products = productDao.findAll(PageRequest.of(offset, pageSize));
         return products;
     }
 }

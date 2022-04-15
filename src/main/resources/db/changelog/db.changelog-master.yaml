@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: adiomiDev
+      changes:
+        - createTable:
+            tableName: products
+            columns:
+              - column:
+                  name: id
+                  type: bigInt
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(50)
+
+              - column:
+                  name: quantity
+                  type: int
+
+              - column:
+                  name: price
+                  type: double
+
+              - column:
+                  name: createdAt
+                  type: date
+
+              - column:
+                  name: updatedAt
+                  type: date
+
+
+

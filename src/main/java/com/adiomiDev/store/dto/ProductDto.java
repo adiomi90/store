@@ -10,5 +10,5 @@ import org.springframework.stereotype.Service;
 @Getter
 @Service
 public class ProductDto {
-    private long ProductId;
+    private long id;
 }

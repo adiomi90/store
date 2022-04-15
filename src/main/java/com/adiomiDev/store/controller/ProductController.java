@@ -6,21 +6,19 @@ import com.adiomiDev.store.entity.Product;
 import com.adiomiDev.store.services.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
-    private ProductService productService;
-    private HttpHeaders header = new HttpHeaders();
+    private final ProductService productService;
 
     @Autowired
     public ProductController(ProductService productService) {
@@ -31,43 +29,30 @@ public class ProductController {
     public ResponseEntity<List<Product>> getAllProducts() {
         try {
             List<Product> products = productService.findAll();
-            header.add("desc", "Store Application");
-            if (products.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body(products);
-
+            return ResponseEntity.status(HttpStatus.OK).body(products);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable("id") long id) {
         try {
-            Optional<Product> product = productService.findById(id);
-            header.add("desc", "Store Application");
-            if (product.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body(product.get());
+            Product product = productService.findById(id).get();
+            return ResponseEntity.status(HttpStatus.OK).body(product);
+
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @GetMapping("/sortAsc/{field}")
     public ResponseEntity<List<Product>> getProductWithSort(@PathVariable String field) {
         try {
-            List<Product> products = productService.findProductWithSort(field);
-            header.add("desc", "Store Application");
-            if (products.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body(products);
-
+            List<Product> products = productService.sortProductAsc(field);
+            return ResponseEntity.status(HttpStatus.OK).body(products);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
     }
@@ -75,15 +60,11 @@ public class ProductController {
     @GetMapping("/sortDesc/{field}")
     public ResponseEntity<List<Product>> getProductWithSortDesc(@PathVariable String field) {
         try {
-            List<Product> products = productService.findProductWithSortDesc(field);
-            header.add("desc", "Store Application");
-            if (products.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body(products);
+            List<Product> products = productService.sortProductDesc(field);
+            return ResponseEntity.status(HttpStatus.OK).body(products);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
     }
@@ -91,31 +72,24 @@ public class ProductController {
     @GetMapping("/pagination/{offSet}/{pageSize}")
     public ResponseEntity<Page<Product>> getProductWithPagination(@PathVariable int offSet, @PathVariable int pageSize) {
         try {
-            Page<Product> products = productService.findProductWithPagination(offSet, pageSize);
-            header.add("desc", "Store Application");
-            if (products.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return ResponseEntity.status(HttpStatus.OK).headers(header).body(products);
+            Page<Product> products = productService.sortProductPagination(offSet, pageSize);
+            return ResponseEntity.status(HttpStatus.OK).body(products);
 
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
     }
 
     @PostMapping
-    public ResponseEntity<ProductDto> addProduct(@RequestBody Product product) {
+    public ResponseEntity<? extends Object> addProduct(@RequestBody Product product) {
         try {
-            ProductDto productSaved = productService.save(product);
-            header.add("desc", "Store Application");
-            if (productSaved.getProductId() > 0) {
-                ProductDto addProduct = productService.save(product);
-                return new ResponseEntity<>(addProduct, header, HttpStatus.CREATED);
-            }
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            var addProduct = productService.save(product);
+            ProductDto productDto = new ProductDto();
+            productDto.setId(productDto.getId());
+            return new ResponseEntity<>(addProduct, HttpStatus.CREATED);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -123,24 +97,21 @@ public class ProductController {
     public ResponseEntity<ProductDto> updateProduct(@PathVariable("id") long id, @RequestBody Product product) {
         try {
             var updatedProduct = productService.update(id, product);
-            header.add("desc", "Store Application");
-            if (updatedProduct.isEmpty()) {
-                return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
-            }
-            return new ResponseEntity<>(updatedProduct.get(), header, HttpStatus.OK);
+            return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ProductDto> deleteProduct(@PathVariable("id") long id) {
         try {
-            header.add("desc", "Store Application");
-            ProductDto deleteProduct = productService.delete(id);
-            return new ResponseEntity<>(deleteProduct, header, HttpStatus.OK);
+            productService.delete(id);
+            ProductDto productDto = new ProductDto();
+            productDto.setId(id);
+            return new ResponseEntity<>(productDto, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, header, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
