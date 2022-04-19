@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.xml.bind.ValidationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,22 +26,30 @@ public class ProductService {
     }
 
 
-    public List<Product> findAll() {
-        return (List<Product>) productDao.findAll();
+    public List<Product> findAll() throws ValidationException{
+        List<Product> products = (List<Product>) productDao.findAll();
+        if(products.isEmpty()){
+            throw new ValidationException("The products list is empty");
+        }
+        return products;
     }
 
 
-    public Optional<Product> findById(long id) {
-        return productDao.findById(id);
+    public Optional<Product> findById(long id) throws ValidationException {
+        Optional<Product> product =  productDao.findById(id);
+        if(product.isEmpty()){
+            throw new ValidationException("product with id "+id+ " does not exist");
+        }
+        return product;
     }
 
 
-    public ProductDto save(Product product) {
+    public ProductDto save(Product product) throws ValidationException {
         ProductDto productDto = new ProductDto();
         if (product.getPrice() <= 0)
-            throw new IllegalStateException("price must be more than 0");
-        else if (product.getQuantity() <= 0)
-            throw new IllegalStateException("quantity must be more than 0");
+            throw new ValidationException("price must be more than 0");
+        else if (product.getQuantity() < 0)
+            throw new ValidationException("quantity must be a positive number");
         else {
             Product save = productDao.save(product);
             productDto.setId(save.getId());
@@ -50,29 +59,36 @@ public class ProductService {
     }
 
 
-    public ProductDto update(long id, Product product) {
+    public ProductDto update(long id, Product product) throws ValidationException {
         ProductDto productDto = new ProductDto();
-        Product productUpdate = productDao.findById(id).get();
+        Optional<Product> productUpdate = productDao.findById(id);
+        if(productUpdate.isEmpty()){
+            throw new ValidationException("product with "+id+" does not exist");
+        }
 
-        productUpdate.setName(product.getName());
-        productUpdate.setQuantity(product.getQuantity());
-        productUpdate.setPrice(product.getPrice());
+        productUpdate.get().setName(product.getName());
+        productUpdate.get().setQuantity(product.getQuantity());
+        productUpdate.get().setPrice(product.getPrice());
 
-        if (productUpdate.getQuantity() <= 0) {
-            throw new IllegalStateException("quantity must be more than 0");
-        } else if (productUpdate.getPrice() <= 0) {
-            throw new IllegalStateException("price must be more than 0");
+        if (productUpdate.get().getQuantity() < 0) {
+            throw new ValidationException("quantity must be a positive number");
+        } else if (productUpdate.get().getPrice() <= 0) {
+            throw new ValidationException("price must be greater than 0");
         } else {
-            productDao.save(productUpdate);
-            productDto.setId(productUpdate.getId());
+            productDao.save(productUpdate.get());
+            productDto.setId(productUpdate.get().getId());
 
         }
         return productDto;
     }
 
 
-    public ProductDto delete(long id) {
+    public ProductDto delete(long id) throws ValidationException{
         ProductDto productDto = new ProductDto();
+        Optional<Product> product = productDao.findById(id);
+        if(product.isEmpty()){
+            throw new ValidationException("product with id "+id+ " does not exist");
+        }
         productDto.setId(productDao.findById(id).get().getId());
         productDao.deleteById(id);
         return productDto;
@@ -90,7 +106,7 @@ public class ProductService {
 
 
     public Page<Product> sortProductPagination(int offset, int pageSize) {
-        Page<Product> products = productDao.findAll(PageRequest.of(offset, pageSize));
-        return products;
+       return productDao.findAll(PageRequest.of(offset, pageSize));
+
     }
 }
