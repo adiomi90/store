@@ -1,8 +1,10 @@
 package com.adiomiDev.store.services;
 
 import com.adiomiDev.store.dao.ProductDao;
+import com.adiomiDev.store.dto.CreateProductDto;
 import com.adiomiDev.store.dto.ProductDto;
 import com.adiomiDev.store.entity.Product;
+import com.adiomiDev.store.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,51 +28,60 @@ public class ProductService {
     }
 
 
-    public List<Product> findAll() throws ValidationException {
+    public List<Product> findAll() throws NotFoundException {
         List<Product> products = (List<Product>) productDao.findAll();
         if (products.isEmpty()) {
-            throw new ValidationException("The products list is empty");
+            throw new NotFoundException("The products list is empty");
         }
+
         return products;
     }
 
 
-    public Optional<Product> findById(long id) throws ValidationException {
+    public Product findById(long id) throws NotFoundException {
         Optional<Product> product = productDao.findById(id);
         if (product.isEmpty()) {
-            throw new ValidationException("product with id " + id + " does not exist");
+            throw new NotFoundException("product with id " + id + " does not exist");
         }
-        return product;
+
+        return product.get();
     }
 
 
-    public ProductDto create(Product product) throws ValidationException {
+    public ProductDto create(CreateProductDto product) throws ValidationException {
         ProductDto productDto = new ProductDto();
         if (product.getPrice() <= 0.99)
             throw new ValidationException("price must be more than 0.99");
-        else if (product.getQuantity()<0)
+        if (product.getQuantity() < 0.0)
             throw new ValidationException("quantity must be a positive number");
-        else {
-            Product save = productDao.save(product);
-            productDto.setId(save.getId());
-        }
+        if (product.getName().isEmpty() || product.getName().isBlank())
+            throw new ValidationException("product name cannot be empty");
+
+        Product newProduct = new Product();
+        newProduct.setName(product.getName());
+        newProduct.setPrice(product.getPrice());
+        newProduct.setQuantity(product.getQuantity());
+
+        productDao.save(newProduct);
+        productDto.setId(newProduct.getId());
+
 
         return productDto;
     }
 
 
-    public ProductDto update(long id, Product product) throws ValidationException {
+    public ProductDto update(long id, CreateProductDto product) throws ValidationException {
         ProductDto productDto = new ProductDto();
         Optional<Product> productUpdate = productDao.findById(id);
         if (productUpdate.isEmpty()) {
-            throw new ValidationException("product with " + id + " does not exist");
+            throw new NotFoundException("product with " + id + " does not exist");
         }
 
         productUpdate.get().setName(product.getName());
         productUpdate.get().setQuantity(product.getQuantity());
         productUpdate.get().setPrice(product.getPrice());
 
-        if (productUpdate.get().getQuantity() < 0) {
+        if (productUpdate.get().getQuantity() < 0.0) {
             throw new ValidationException("quantity must be a positive number");
         } else if (productUpdate.get().getPrice() <= 0.99) {
             throw new ValidationException("price must be greater than 0.99");
@@ -95,28 +106,28 @@ public class ProductService {
     }
 
 
-    public List<Product> sortProductAsc(String field) throws ValidationException {
+    public List<Product> sortProductAsc(String field) throws NotFoundException {
         List<Product> products = (List<Product>) productDao.findAll(Sort.by(Sort.Direction.ASC, field));
-        if(products.isEmpty()){
-            throw new ValidationException("The product list is empty");
+        if (products.isEmpty()) {
+            throw new NotFoundException("The product list is empty");
         }
         return products;
     }
 
 
-    public List<Product> sortProductDesc(String field) throws ValidationException {
-       List<Product> products = (List<Product>) productDao.findAll(Sort.by(Sort.Direction.DESC, field));
-        if(products.isEmpty()){
-            throw new ValidationException("The product list is empty");
+    public List<Product> sortProductDesc(String field) throws NotFoundException {
+        List<Product> products = (List<Product>) productDao.findAll(Sort.by(Sort.Direction.DESC, field));
+        if (products.isEmpty()) {
+            throw new NotFoundException("The product list is empty");
         }
         return products;
     }
 
 
-    public Page<Product> sortProductPagination(int offset, int pageSize) throws ValidationException {
+    public Page<Product> sortProductPagination(int offset, int pageSize) throws NotFoundException {
         Page<Product> products = productDao.findAll(PageRequest.of(offset, pageSize));
-        if(products.isEmpty()){
-            throw new ValidationException("The product list is empty");
+        if (products.isEmpty()) {
+            throw new NotFoundException("The product list is empty");
         }
         return products;
     }

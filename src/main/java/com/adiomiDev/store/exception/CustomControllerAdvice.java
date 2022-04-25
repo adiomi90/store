@@ -5,27 +5,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import javax.xml.bind.ValidationException;
+
 @ControllerAdvice
-public class CustomControllerAdvice {
+public class CustomControllerAdvice  {
 
-    @ExceptionHandler(ProductErrorException.class)
-    public ResponseEntity<ErrorResponse> handleProductNotFoundException(Exception e) {
-        HttpStatus status = HttpStatus.NOT_FOUND;
-
-        return new ResponseEntity<>(
-                new ErrorResponse(status, e.getMessage()), status);
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException e) {
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(ProductParameterConstraintException.class)
-    public ResponseEntity<ErrorResponse> handleProductConstraintException(Exception e) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<>(new ErrorResponse(status, e.getMessage()), status);
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ErrorResponse> handleProductConstraintException(ValidationException e) {
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity handleExceptions(Exception e) {
-        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-
-        return new ResponseEntity<>(new ErrorResponse(status, e.getMessage()), status);
+    public ResponseEntity<ErrorResponse> handleExceptions(Exception e) {
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
