@@ -1,6 +1,6 @@
 package com.adiomiDev.store.services;
 
-import com.adiomiDev.store.dao.ProductDao;
+import com.adiomiDev.store.dao.ProductRepository;
 import com.adiomiDev.store.dto.CreateProductDto;
 import com.adiomiDev.store.dto.ProductDto;
 import com.adiomiDev.store.entity.Product;
@@ -18,18 +18,19 @@ import java.util.Optional;
 @Service
 public class ProductService {
 
-    private final ProductDao productDao;
+
+    private final ProductRepository productRepository;
 
 
     @Autowired
-    public ProductService(ProductDao productDao) {
-        this.productDao = productDao;
+    public ProductService(ProductRepository productDao) {
+        this.productRepository = productDao;
 
     }
 
 
     public List<Product> findAll() throws NotFoundException {
-        List<Product> products = (List<Product>) productDao.findAll();
+        List<Product> products = (List<Product>) productRepository.findAll();
         if (products.isEmpty()) {
             throw new NotFoundException("The products list is empty");
         }
@@ -39,7 +40,7 @@ public class ProductService {
 
 
     public Product findById(long id) throws NotFoundException {
-        Optional<Product> product = productDao.findById(id);
+        Optional<Product> product = productRepository.findById(id);
         if (product.isEmpty()) {
             throw new NotFoundException("product with id " + id + " does not exist");
         }
@@ -62,7 +63,7 @@ public class ProductService {
         newProduct.setPrice(product.getPrice());
         newProduct.setQuantity(product.getQuantity());
 
-        productDao.save(newProduct);
+        productRepository.save(newProduct);
         productDto.setId(newProduct.getId());
 
 
@@ -72,7 +73,7 @@ public class ProductService {
 
     public ProductDto update(long id, CreateProductDto product) throws ValidationException {
         ProductDto productDto = new ProductDto();
-        Optional<Product> productUpdate = productDao.findById(id);
+        Optional<Product> productUpdate = productRepository.findById(id);
         if (productUpdate.isEmpty()) {
             throw new NotFoundException("product with " + id + " does not exist");
         }
@@ -86,7 +87,7 @@ public class ProductService {
         } else if (productUpdate.get().getPrice() <= 0.99) {
             throw new ValidationException("price must be greater than 0.99");
         } else {
-            productDao.save(productUpdate.get());
+            productRepository.save(productUpdate.get());
             productDto.setId(productUpdate.get().getId());
 
         }
@@ -96,18 +97,18 @@ public class ProductService {
 
     public ProductDto delete(long id) throws ValidationException {
         ProductDto productDto = new ProductDto();
-        Optional<Product> product = productDao.findById(id);
+        Optional<Product> product = productRepository.findById(id);
         if (product.isEmpty()) {
             throw new ValidationException("product with id " + id + " does not exist");
         }
-        productDto.setId(productDao.findById(id).get().getId());
-        productDao.deleteById(id);
+        productDto.setId(productRepository.findById(id).get().getId());
+        productRepository.deleteById(id);
         return productDto;
     }
 
 
     public List<Product> sortProductAsc(String field) throws NotFoundException {
-        List<Product> products = (List<Product>) productDao.findAll(Sort.by(Sort.Direction.ASC, field));
+        List<Product> products = (List<Product>) productRepository.findAll(Sort.by(Sort.Direction.ASC, field));
         if (products.isEmpty()) {
             throw new NotFoundException("The product list is empty");
         }
@@ -116,7 +117,7 @@ public class ProductService {
 
 
     public List<Product> sortProductDesc(String field) throws NotFoundException {
-        List<Product> products = (List<Product>) productDao.findAll(Sort.by(Sort.Direction.DESC, field));
+        List<Product> products = (List<Product>) productRepository.findAll(Sort.by(Sort.Direction.DESC, field));
         if (products.isEmpty()) {
             throw new NotFoundException("The product list is empty");
         }
@@ -125,7 +126,7 @@ public class ProductService {
 
 
     public Page<Product> sortProductPagination(int offset, int pageSize) throws NotFoundException {
-        Page<Product> products = productDao.findAll(PageRequest.of(offset, pageSize));
+        Page<Product> products = productRepository.findAll(PageRequest.of(offset, pageSize));
         if (products.isEmpty()) {
             throw new NotFoundException("The product list is empty");
         }

@@ -6,9 +6,7 @@ import com.adiomiDev.store.dto.ProductDto;
 import com.adiomiDev.store.entity.Product;
 import com.adiomiDev.store.exception.NotFoundException;
 import com.adiomiDev.store.services.ProductService;
-import org.aspectj.weaver.ast.Not;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
@@ -59,7 +57,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductDto addProduct(@RequestBody CreateProductDto product) throws ValidationException {
+    public ProductDto addProduct(@RequestBody  CreateProductDto product) throws ValidationException {
         return productService.create(product);
     }
 
